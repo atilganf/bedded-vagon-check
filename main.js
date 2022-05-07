@@ -1,19 +1,29 @@
 const puppeteer = require('puppeteer');
 
 (async () => {
-    let browser = await puppeteer.launch();
-    let page = await browser.newPage();
-    await page.setViewport({ width: 1600, height: 900 });
-    console.log("started")
-    await goToTicketPage(`31.05.2022`)
+    let fifteenMinutes = 15*60*1000
+    checkBeddedVaggons()
+    setInterval(() => {
+        checkBeddedVaggons()
+    }, fifteenMinutes);
 
-    let pullmanInfo = await getPullmanInfoForAllDates()
-    console.log(pullmanInfo)
+    let browser;
+    let page;
+    
+    async function checkBeddedVaggons() {
+        browser = await puppeteer.launch();
+        page = await browser.newPage();
+        await page.setViewport({ width: 1600, height: 900 });
+        console.log("started")
+        await goToTicketPage(`31.05.2022`)
 
+        let pullmanInfo = await getPullmanInfoForAllDates()
+        let checkTime = new Date()
+        console.log("Check Time:",checkTime.toLocaleTimeString())
+        console.log(pullmanInfo)
 
-
-
-    await browser.close();
+        await browser.close();
+    }
 
     async function goToTicketPage(questionDay) {
         await page.goto('https://ebilet.tcddtasimacilik.gov.tr/view/eybis/tnmGenel/tcddWebContent.jsf');
@@ -31,7 +41,7 @@ const puppeteer = require('puppeteer');
         await page.keyboard.press("Enter", { delay: 50 })
         await page.screenshot({ path: 'example.png' });
         console.log("info entered")
-        
+
         await delay(2000)
         await page.goto('https://ebilet.tcddtasimacilik.gov.tr/view/eybis/tnmGenel/int_sat_001.jsf');
 
