@@ -58,19 +58,6 @@ const puppeteer = require('puppeteer');
         return isLoaded
     }
 
-    async function getLiTexts() {
-        const queryName = 'ul > li.ui-selectonemenu-item.ui-selectonemenu-list-item.ui-corner-all';
-        let liTexts = await page.$$eval(queryName, (options) => options.map((option) => option.textContent))
-        return liTexts;
-    }
-
-    async function getPullmanInfo() {
-        let liTexts = await getLiTexts()
-        const vagonLiText = liTexts[1];
-        // let isBuyable = !(vagonLiText.includes("0"))
-        return vagonLiText
-    }
-
     async function getPullmanInfoForAllDates() {
         let date = new Date();
         const currentDay = date.getDate()
@@ -92,12 +79,25 @@ const puppeteer = require('puppeteer');
         return pullmanInfoArray
     }
 
+    async function getPullmanInfo() {
+        let liTexts = await getLiTexts()
+        const vagonLiText = liTexts[1];
+        // let isBuyable = !(vagonLiText.includes("0"))
+        return vagonLiText
+    }
+
     async function goToPreviousTicketPage() {
         const previousDayButton = (await page.$$("button"))[1]
         await previousDayButton.click()
         await delay(2000)
         await page.goto('https://ebilet.tcddtasimacilik.gov.tr/view/eybis/tnmGenel/int_sat_001.jsf');
         await page.screenshot({ path: 'example.png' });
+    }
+
+    async function getLiTexts() {
+        const queryName = 'ul > li.ui-selectonemenu-item.ui-selectonemenu-list-item.ui-corner-all';
+        let liTexts = await page.$$eval(queryName, (options) => options.map((option) => option.textContent))
+        return liTexts;
     }
 
 })();
