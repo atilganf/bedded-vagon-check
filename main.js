@@ -1,7 +1,8 @@
 const puppeteer = require('puppeteer');
 
 (async () => {
-    let fifteenMinutes = 15*60*1000
+    let fifteenMinutes = 15 * 60 * 1000
+
     checkBeddedVaggons()
     setInterval(() => {
         checkBeddedVaggons()
@@ -9,17 +10,19 @@ const puppeteer = require('puppeteer');
 
     let browser;
     let page;
-    
+
     async function checkBeddedVaggons() {
+        console.clear()
         browser = await puppeteer.launch();
         page = await browser.newPage();
         await page.setViewport({ width: 1600, height: 900 });
         console.log("started")
-        await goToTicketPage(`31.05.2022`)
+        let lastCheckDate = getLastCheckDateText()
+        await goToTicketPage(lastCheckDate)
 
         let pullmanInfo = await getPullmanInfoForAllDates()
         let checkTime = new Date()
-        console.log("Check Time:",checkTime.toLocaleTimeString())
+        console.log("Check Time:", checkTime.toLocaleTimeString())
         console.log(pullmanInfo)
 
         await browser.close();
@@ -54,25 +57,25 @@ const puppeteer = require('puppeteer');
 
     async function isTicketPageLoaded() {
         let liTexts = await getLiTexts()
-        let isLoaded = liTexts[1].includes("2 Yataklı 1.Mevki")
+        let pullmanText = liTexts[1] ?? ""
+        let isLoaded = pullmanText.includes("2 Yataklı 1.Mevki")
+
         return isLoaded
     }
 
     async function getPullmanInfoForAllDates() {
-        let date = new Date();
-        const currentDay = date.getDate()
-        const questionDay = 31
-
-        let checkLength = questionDay - currentDay
-        const previousDayButton = (await page.$$("button"))[1]
-        const nextDayButton = (await page.$$("button"))[2]
 
         let pullmanInfoArray = [];
+        let checkLength = 29
 
+        let checkDate = getLastCheckDate()
         for (let i = 0; i < checkLength; i++) {
             let info = await getPullmanInfo()
-            pullmanInfoArray.push({ day: questionDay - i, text: info })
-            console.log(`checking day: ${questionDay - i}`)
+            console.log(`checking day: ${dateToText(checkDate)}`)
+            if (info) {
+                pullmanInfoArray.push({ date: dateToText(checkDate), text: info })
+            }
+            checkDate.setDate(checkDate.getDate() - 1)
             await goToPreviousTicketPage()
         }
 
@@ -82,8 +85,11 @@ const puppeteer = require('puppeteer');
     async function getPullmanInfo() {
         let liTexts = await getLiTexts()
         const vagonLiText = liTexts[1];
-        // let isBuyable = !(vagonLiText.includes("0"))
-        return vagonLiText
+        let isBuyable = !(vagonLiText.includes("0"))
+        if (isBuyable) {
+            return vagonLiText
+        }
+        return false
     }
 
     async function goToPreviousTicketPage() {
@@ -98,6 +104,26 @@ const puppeteer = require('puppeteer');
         const queryName = 'ul > li.ui-selectonemenu-item.ui-selectonemenu-list-item.ui-corner-all';
         let liTexts = await page.$$eval(queryName, (options) => options.map((option) => option.textContent))
         return liTexts;
+    }
+
+    function getLastCheckDate() {
+        let lastDate = new Date()
+        lastDate.setDate(lastDate.getDate() + 29)
+        return lastDate
+    }
+
+    function getLastCheckDateText() {
+        let lastDate = getLastCheckDate()
+        lastDate = dateToText(lastDate)
+        return lastDate
+    }
+
+    function dateToText(date) {
+        let day = date.getDate()
+        let month = date.getMonth() + 1
+        let year = date.getFullYear()
+        date = `${day}.${month}.${year}`
+        return date
     }
 
 })();
